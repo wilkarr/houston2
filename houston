@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NASA Control Panel</title>
+  <link href="https://urldefense.com/v3/__https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css__;!!OCE6w2Z3cg!B_2p2xgzbxnuYlwuPyly9LLalEzslDpoxjqCffA35ByN3kIO1kwVkTzacTJMJ6TNOR-h042LrbajW1prg6flqwiR5sPihbsx$ " rel="stylesheet">
+  <style>
+    /* Custom styles */
+    body {
+      background-color: #000;
+      color: white;
+    }
+    .monitor {
+      background-color: #000;
+      width: 300px;
+      height: 200px;
+      border: 5px solid #333;
+      position: relative;
+    }
+    .monitor-grid {
+      background: repeating-linear-gradient(
+        0deg, 
+        transparent, transparent 10px, 
+        green 10px, green 12px
+      ), 
+      repeating-linear-gradient(
+        90deg, 
+        transparent, transparent 10px, 
+        green 10px, green 12px
+      );
+      position: relative;
+      overflow: hidden;
+    }
+    .digital-display {
+      color: red;
+      font-family: 'Digital-7', sans-serif;
+      font-size: 2rem;
+      text-align: center;
+      margin: 5px;
+    }
+    .button-control {
+      padding: 20px;
+      margin: 5px;
+      cursor: pointer;
+      color: white;
+      transition: transform 0.2s, background-color 0.3s;
+      border-radius: 0;
+      width: 100px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .button-control:hover {
+      opacity: 0.8;
+      background-color: #555;
+    }
+    .button-control:active {
+      transform: scale(0.95);
+    }
+    .led {
+      width: 20px;
+      height: 20px;
+      background-color: red;
+      border-radius: 50%;
+    }
+    .led.on {
+      background-color: green;
+    }
+    .perilla {
+      width: 50px;
+      height: 50px;
+      background-color: gray;
+      border-radius: 50%;
+      border: 2px solid black;
+      transition: transform 0.3s ease-in-out;
+    }
+    .perilla.rotate {
+      transform: rotate(180deg);
+    }
+    video {
+      width: 100%;
+      height: 100%;
+    }
+    #nasa-logo {
+      width: 150px;
+      height: auto;
+    }
+    #control-panel {
+      background-color: #111;
+      padding: 20px;
+      border-radius: 15px;
+    }
+    .ball {
+      width: 20px;
+      height: 20px;
+      background-color: white;
+      border-radius: 50%;
+      position: absolute;
+    }
+    .timer-wrapper {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .emergency-mode {
+      background-color: red !important;
+    }
+    .vibration {
+      animation: vibrate 0.2s linear infinite;
+    }
+    @keyframes vibrate {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(2px, -2px); }
+      50% { transform: translate(-2px, 2px); }
+      75% { transform: translate(2px, 2px); }
+      100% { transform: translate(-2px, -2px); }
+    }
+    /* Velocímetro */
+    .speedometer {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 5px solid #fff;
+      position: relative;
+    }
+    .needle {
+      width: 50px;
+      height: 5px;
+      background-color: red;
+      position: absolute;
+      top: 50%;
+      transform-origin: left;
+      transform: rotate(0deg);
+    }
+    .speedometer-center {
+      width: 10px;
+      height: 10px;
+      background-color: white;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+    }
+    #status-panel {
+      color: white;
+      font-size: 1.2rem;
+      text-align: center;
+      margin-left: 20px;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center p-4">
+
+  <!-- NASA Logo, Velocidad, Altitud y Velocímetro -->
+  <div class="flex flex-row items-center space-x-10">
+    <!-- Logo NASA -->
+    <img id="nasa-logo" src="https://urldefense.com/v3/__https://upload.wikimedia.org/wikipedia/commons/e/e5/NASA_logo.svg__;!!OCE6w2Z3cg!B_2p2xgzbxnuYlwuPyly9LLalEzslDpoxjqCffA35ByN3kIO1kwVkTzacTJMJ6TNOR-h042LrbajW1prg6flqwiR5qkKN7Wf$ " alt="NASA Logo" class="mb-4">
+
+    <!-- Velocidad y Altitud -->
+    <div id="status-panel">
+      <p>Velocity: <span id="velocity-display">0</span> km/h</p>
+      <p>Altitude: <span id="altitude-display">0</span> m</p>
+    </div>
+
+    <!-- Velocímetro para simular la temperatura -->
+    <div class="speedometer">
+      <div class="needle" id="needle"></div>
+      <div class="speedometer-center"></div>
+    </div>
+  </div>
+
+  <!-- Control Panel -->
+  <div id="control-panel" class="flex flex-col items-center p-4">
+
+    <!-- Monitors Row -->
+    <div class="flex justify-center space-x-8">
+      <!-- Monitor 1 -->
+      <div id="monitor1" class="monitor flex items-center justify-center text-white text-lg">
+        Flight Status
+      </div>
+      <!-- Monitor 2 (Oscilloscope with moving ball) -->
+      <div id="monitor2" class="monitor monitor-grid">
+        <div id="ball" class="ball"></div>
+      </div>
+      <!-- Monitor 3 (Webcam) + Timers -->
+      <div class="flex">
+        <div id="monitor3" class="monitor">
+          <video id="webcam" autoplay></video>
+        </div>
+        <div class="timer-wrapper">
+          <div class="digital-display" id="timer1">00:10</div>
+          <div class="digital-display" id="timer2">00:10</div>
+          <div class="digital-display" id="timer3">00:10</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEDs -->
+    <div class="flex space-x-4 mb-6 justify-center">
+      <div id="led1" class="led"></div>
+      <div id="led2" class="led"></div>
+      <div id="led3" class="led"></div>
+      <div id="led4" class="led"></div>
+      <div id="led5" class="led"></div>
+    </div>
+
+    <!-- Botones en dos filas -->
+    <div class="flex flex-col items-center space-y-4">
+      <!-- Fila 1 -->
+      <div class="grid grid-cols-6 gap-4">
+        <div class="button-control bg-red-600" id="engine-start">Engine Start</div>
+        <div class="button-control bg-blue-600" id="ignition">Ignition</div>
+        <div class="button-control bg-green-600" id="fuel-valve">Fuel Valve</div>
+        <div class="button-control bg-yellow-600" id="stage-separation">Stage Separation</div>
+        <div class="button-control bg-purple-600" id="main-engine-cutoff">Main Engine Cutoff</div>
+        <div class="button-control bg-gray-600" id="abort">Abort</div>
+      </div>
+
+      <!-- Fila 2 -->
+      <div class="grid grid-cols-6 gap-4">
+        <div class="button-control bg-red-700" id="emergency">Emergency</div>
+        <div class="button-control bg-green-700 hidden" id="end-emergency">End Emergency</div>
+        <div class="button-control bg-gray-700" id="toggle-camera">Turn Off Camera</div>
+        <div class="button-control bg-green-700" id="reactivate-camera">Reactivate Camera</div>
+        <div class="button-control bg-orange-600" id="audio1">Play Audio 1</div>
+        <div class="button-control bg-pink-600" id="audio2">Play Audio 2</div>
+      </div>
+    </div>
+
+    <!-- Perillas debajo de los botones -->
+    <div class="flex space-x-4 mt-6">
+      <div class="perilla" id="perilla1"></div>
+      <div class="perilla" id="perilla2"></div>
+      <div class="perilla" id="perilla3"></div>
+      <div class="perilla" id="perilla4"></div>
+    </div>
+  </div>
+
+  <!-- Audio -->
+  <audio id="audio-file1" src="audio1.mp3"></audio>
+  <audio id="audio-file2" src="audio2.mp3"></audio>
+  <audio id="emergency-sound" src="emergency.mp3"></audio>
+
+  <script>
+    let posX = 140, posY = 180; // Initial position at the bottom center of the monitor
+    const ball = document.getElementById('ball');
+    const maxPosX = 280, maxPosY = 180; // Limits for ball movement
+    const minPosX = 0, minPosY = 0; // Minimum boundaries
+    let isMovingAutomatically = false;
+    let cameraStream;
+    let velocity = 0;
+    let altitude = 0;
+
+    // Position the ball initially
+    ball.style.left = `${posX}px`;
+    ball.style.top = `${posY}px`;
+
+    // Function to handle ball movement with arrow keys
+    function moveBallWithArrowKeys(event) {
+      if (!isMovingAutomatically) {
+        switch (event.key) {
+          case 'ArrowUp':
+            if (posY > minPosY) posY -= 10;
+            break;
+          case 'ArrowDown':
+            if (posY < maxPosY) posY += 10;
+            break;
+          case 'ArrowLeft':
+            if (posX > minPosX) posX -= 10;
+            break;
+          case 'ArrowRight':
+            if (posX < maxPosX) posX += 10;
+            break;
+        }
+        ball.style.left = `${posX}px`;
+        ball.style.top = `${posY}px`;
+      }
+    }
+
+    // Listen for keypress events for controlling the ball
+    document.addEventListener('keydown', moveBallWithArrowKeys);
+
+    // Function to handle the automatic movement for "Stage Separation"
+    document.getElementById('stage-separation').addEventListener('click', () => {
+      document.getElementById('led4').classList.add('on');
+      document.getElementById('monitor1').textContent = 'Stage Separation!';
+
+      // Move the ball upwards automatically
+      isMovingAutomatically = true;
+      const interval = setInterval(() => {
+        if (posY > minPosY) {
+          posY -= 5;
+          ball.style.top = `${posY}px`;
+        } else {
+          clearInterval(interval); // Stop when the ball reaches the top
+          isMovingAutomatically = false;
+        }
+      }, 50);
+    });
+
+    // Additional button functionalities
+    document.getElementById('engine-start').addEventListener('click', () => {
+      document.getElementById('led1').classList.add('on');
+      startCountdown('timer1', 10);
+      startCountdown('timer2', 10);
+      startCountdown('timer3', 10);
+    });
+
+    document.getElementById('ignition').addEventListener('click', () => {
+      document.getElementById('led2').classList.add('on');
+    });
+
+    document.getElementById('fuel-valve').addEventListener('click', () => {
+      document.getElementById('led3').classList.add('on');
+      document.getElementById('monitor1').textContent = 'Fuel Flowing';
+    });
+
+    document.getElementById('main-engine-cutoff').addEventListener('click', () => {
+      document.getElementById('led5').classList.add('on');
+    });
+
+    document.getElementById('abort').addEventListener('click', () => {
+      resetSystem();
+    });
+
+    // Function to reset the system
+    function resetSystem() {
+      document.querySelectorAll('.led').forEach(led => led.classList.remove('on'));
+      document.getElementById('monitor1').textContent = 'Flight Status';
+      posX = 140; // Reset ball position to the center bottom
+      posY = 180;
+      ball.style.left = `${posX}px`;
+      ball.style.top = `${posY}px`;
+    }
+
+    // Countdown Timer function
+    function startCountdown(timerId, startValue) {
+      let time = startValue;
+      const timerElement = document.getElementById(timerId);
+      const interval = setInterval(() => {
+        if (time <= 0) {
+          clearInterval(interval);
+        } else {
+          time--;
+          timerElement.textContent = `00:${String(time).padStart(2, '0')}`;
+        }
+      }, 1000);
+    }
+
+    // Webcam integration
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        cameraStream = stream;
+        document.getElementById('webcam').srcObject = stream;
+      });
+
+    // Toggle camera functionality
+    document.getElementById('toggle-camera').addEventListener('click', () => {
+      const videoElement = document.getElementById('webcam');
+      if (cameraStream) {
+        videoElement.srcObject.getTracks().forEach(track => track.stop()); // Stop the camera
+        videoElement.srcObject = null;
+      }
+    });
+
+    // Reactivate camera functionality
+    document.getElementById('reactivate-camera').addEventListener('click', () => {
+      navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+        cameraStream = stream;
+        document.getElementById('webcam').srcObject = stream;
+      });
+    });
+
+    // Audio controls
+    document.getElementById('audio1').addEventListener('click', () => {
+      document.getElementById('audio-file1').play();
+    });
+
+    document.getElementById('audio2').addEventListener('click', () => {
+      document.getElementById('audio-file2').play();
+    });
+
+    // Sequential LED animation (simultaneous blinking)
+    const leds = [document.getElementById('led1'), document.getElementById('led2'), document.getElementById('led3'), document.getElementById('led4'), document.getElementById('led5')];
+
+    function blinkLeds() {
+      leds.forEach((led) => led.classList.toggle('on'));
+    }
+    setInterval(blinkLeds, 1000); // Blink LEDs every 1 second
+
+    // Emergency mode with vibration
+    document.getElementById('emergency').addEventListener('click', () => {
+      document.querySelectorAll('.monitor').forEach(monitor => {
+        monitor.classList.add('emergency-mode', 'vibration');
+      });
+      document.getElementById('emergency-sound').play();
+      document.getElementById('end-emergency').classList.remove('hidden');
+    });
+
+    // End emergency
+    document.getElementById('end-emergency').addEventListener('click', () => {
+      document.querySelectorAll('.monitor').forEach(monitor => {
+        monitor.classList.remove('emergency-mode', 'vibration');
+      });
+      document.getElementById('end-emergency').classList.add('hidden');
+      document.getElementById('emergency-sound').pause();
+      document.getElementById('emergency-sound').currentTime = 0; // Reset sound
+    });
+
+    // Dynamic update for velocity and altitude
+    setInterval(() => {
+      velocity = Math.floor(Math.random() * 10000);
+      altitude = Math.floor(Math.random() * 50000);
+      document.getElementById('velocity-display').textContent = velocity;
+      document.getElementById('altitude-display').textContent = altitude;
+    }, 2000); // Update every 2 seconds
+
+    // Velocímetro para la temperatura simulada
+    function updateSpeedometer() {
+      const needle = document.getElementById('needle');
+      const temperature = Math.random() * 180; // Simula un valor de temperatura entre 0 y 180 grados
+      needle.style.transform = `rotate(${temperature - 90}deg)`; // El valor -90 es para ajustar el ángulo inicial
+    }
+    setInterval(updateSpeedometer, 2000); // Actualiza el velocímetro cada 2 segundos
+  </script>
+</body>
+</html>
